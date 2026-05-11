@@ -1,0 +1,63 @@
+
+services:
+   #  SERVICIO 1: Base de datos MySQL 
+  mysql:
+    image: mysql:8.0
+      # Nombre del contenedor
+    container_name: DBmysql
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE_VENTAS}
+      ports:
+      - "3306:3306"
+      volumes:
+      - mysql_data:/var/lib/mysql
+
+  # SERVICIO 2: Backend Spring Boot
+  backend-ventas:
+    build: 
+      context: # ./ agregar ruta  --------------------
+      dockerfile: Dockerfile
+    container_name: backend-ventas
+    ports:
+      - "8080:8080"
+    environment:
+      - DB_ENDPOINT=db
+      - DB_PORT=3306
+      - DB_NAME=${MYSQL_DATABASE_VENTAS}
+      - DB_USERNAME=root
+      - DB_PASSWORD=${MYSQL_ROOT_PASSWORD}
+    depends_on:
+      - db 
+  
+  backend-despachos:
+    build: 
+      context: # ./ agregar ruta  --------------------
+      dockerfile: Dockerfile
+    container_name: backend-despachos
+    ports:
+      - "8081:8081"
+    environment:
+      - DB_ENDPOINT=db
+      - DB_PORT=3306
+      - DB_NAME=${MYSQL_DATABASE_DESPACHOS}
+      - DB_USERNAME=root
+      - DB_PASSWORD=${MYSQL_ROOT_PASSWORD}
+    depends_on:
+      - db 
+  
+
+  frontend:
+    build: 
+      context: ./front_despacho
+      dockerfile: Dockerfile
+    container_name: frontend-despacho
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend-ventas
+      - backend-despachos
+
+volumes:
+  mysql_data:
